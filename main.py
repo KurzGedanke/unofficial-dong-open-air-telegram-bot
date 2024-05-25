@@ -1,7 +1,9 @@
 import logging
 import os
+import json
 from typing import Dict
 
+import requests
 from dotenv import load_dotenv
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
@@ -29,7 +31,7 @@ logger = logging.getLogger(__name__)
 CHOOSING, WEEKEND, DAY, ABOUT = range(4)
 
 reply_keyboard = [
-    ['day', 'weekend', 'about']
+    ['Next', 'Day', 'Weekend', 'About', 'Stop']
 ]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
@@ -39,6 +41,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         "Hi! Welcome to the Unoffocial Dong Open Air Telegram bot!",
         reply_markup=markup,
     )
+
+    return CHOOSING
+
+
+async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    r = requests.get('https://festivals.kurzgedanke.de/api/festivals/doa24/stages/mainstage/upnext')
+    upnext = r.json()
+    await update.message.reply_text(f"Up-Next:\n{upnext[0]['band']}\n{upnext[0]['startTime']}")
 
     return CHOOSING
 
@@ -55,8 +65,8 @@ async def weekend(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return CHOOSING
 
 
-async def done(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Stopping!")
+async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("Stopping!\nYou stopped the bot. To restart it type \n/start")
     return ConversationHandler.END
 
 
@@ -67,12 +77,13 @@ def main() -> None:
         entry_points=[CommandHandler("start", start)],
         states={
             CHOOSING: [
-                MessageHandler(filters.Regex("^day$"), day),
-                MessageHandler(filters.Regex("^weekend$"), weekend),
-                MessageHandler(filters.Regex("^done$"), done),
+                MessageHandler(filters.Regex("^Next$"), upnext),
+                MessageHandler(filters.Regex("^Day$"), day),
+                MessageHandler(filters.Regex("^Weekend$"), weekend),
+                MessageHandler(filters.Regex("^Stop$"), stop),
             ]
         },
-        fallbacks=[MessageHandler(filters.Regex("^Done$"), done)],
+        fallbacks=[MessageHandler(filters.Regex("^Done$"), stop)],
     )
 
     application.add_handler(conv_handler)
