@@ -1,5 +1,6 @@
 import logging
 import os
+import datetime
 import json
 from typing import Dict
 
@@ -31,14 +32,14 @@ logger = logging.getLogger(__name__)
 CHOOSING, WEEKEND, DAY, ABOUT = range(4)
 
 reply_keyboard = [
-    ['Next', 'Day', 'Weekend', 'About', 'Stop']
+    ['Next', 'Bands', 'About', 'Stop']
 ]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        "Hi! Welcome to the Unoffocial Dong Open Air Telegram bot!",
+        "Hi! Welcome to the Unoffical Dong Open Air Telegram bot! You got the following commands\n/next\n/bands\n/about\n/stop\n If the bot stops responing try to enter /start again.",
         reply_markup=markup,
     )
 
@@ -53,20 +54,31 @@ async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return CHOOSING
 
 
-async def day(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("DAY!")
+async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text('Loading...')
+    r = requests.get('https://festivals.kurzgedanke.de/api/festivals/doa24/stages/mainstage/timeslots')
+    timeslotsMainStage = r.json()
+    weekendStr = f"Running Order Dong Open Air 2024\n"
+
+    for timeslot in timeslotsMainStage:
+        timestamp = timeslot['startTime']['timestamp']
+        value = datetime.datetime.fromtimestamp(timestamp)
+        weekendStr += f" {value:%A %H:%M}\t-\t{timeslot['band']}\n"
+
+    await update.message.reply_text(weekendStr)
+
 
     return CHOOSING
 
 
-async def weekend(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("WEEKEND!")
-
+async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("Stopping!\nYou stopped the bot. To restart it type \n/start")
     return CHOOSING
 
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Stopping!\nYou stopped the bot. To restart it type \n/start")
+    await update.message.reply_text("Stopping!")
+    await update.message.reply_text("You stopped the bot. To restart it type \n/start")
     return ConversationHandler.END
 
 
@@ -78,9 +90,10 @@ def main() -> None:
         states={
             CHOOSING: [
                 MessageHandler(filters.Regex("^Next$"), upnext),
-                MessageHandler(filters.Regex("^Day$"), day),
-                MessageHandler(filters.Regex("^Weekend$"), weekend),
+                MessageHandler(filters.Regex("^Bands$"), bands),
                 MessageHandler(filters.Regex("^Stop$"), stop),
+                MessageHandler(filters.Regex("^About"), about),
+                MessageHandler(filters.Regex("^Help"), about),
             ]
         },
         fallbacks=[MessageHandler(filters.Regex("^Done$"), stop)],
