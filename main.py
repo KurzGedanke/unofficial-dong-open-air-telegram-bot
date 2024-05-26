@@ -39,7 +39,7 @@ markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        "Hi! Welcome to the Unoffical Dong Open Air Telegram bot! You got the following commands\n/next\n/bands\n/about\n/stop\n If the bot stops responing try to enter /start again.",
+        "Hi! Welcome to the unoffical Dong Open Air Telegram bot! You got the following commands\n/next\n/bands\n/about\n/stop\n If the bot stops responing try to enter /start again.",
         reply_markup=markup,
     )
 
@@ -72,7 +72,11 @@ async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Stopping!\nYou stopped the bot. To restart it type \n/start")
+    await update.message.reply_text("Hey! Thanks for using the unoffical Dong Open Air Telegram bot!")
+    await update.message.reply_text("This bot, as well as the source is open source and can be found on github.")
+    await update.message.reply_text("https://github.com/KurzGedanke/unofficial-dong-open-air-telegram-bot")
+    await update.message.reply_text("If you notice anything off or have any question, please contact me!\nYou will find me on most social network with the handel @ KurzGedanke.")
+    await update.message.reply_text("Have fun and stay save at Dong Open Air 2024!")
     return CHOOSING
 
 
