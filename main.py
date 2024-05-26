@@ -57,16 +57,15 @@ async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text('Loading...')
     r = requests.get('https://festivals.kurzgedanke.de/api/festivals/doa24/stages/mainstage/timeslots')
-    timeslotsMainStage = r.json()
-    weekendStr = f"Running Order Dong Open Air 2024\n"
+    timeslots_main_stage = r.json()
+    weekend_str = f"Running Order Dong Open Air 2024\n"
 
-    for timeslot in timeslotsMainStage:
+    for timeslot in timeslots_main_stage:
         timestamp = timeslot['startTime']['timestamp']
         value = datetime.datetime.fromtimestamp(timestamp)
-        weekendStr += f" {value:%A %H:%M}\t-\t{timeslot['band']}\n"
+        weekend_str += f" {value:%A %H:%M}\t-\t{timeslot['band']}\n"
 
-    await update.message.reply_text(weekendStr)
-
+    await update.message.reply_text(weekend_str)
 
     return CHOOSING
 
