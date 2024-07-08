@@ -41,9 +41,9 @@ telemetry = telemetrydeckpy.TelemetryDeck()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    print(chat_id)
+    # print(chat_id)
     signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Start')
-    signal.is_test_mode = True
+    # signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -57,9 +57,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    print(chat_id)
+    # print(chat_id)
     signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.UpNext')
-    signal.is_test_mode = True
+    # signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -72,9 +72,9 @@ async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    print(chat_id)
+    # print(chat_id)
     signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Bands')
-    signal.is_test_mode = True
+    # signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -95,9 +95,9 @@ async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    print(chat_id)
+    # print(chat_id)
     signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.About')
-    signal.is_test_mode = True
+    # signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -111,9 +111,9 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    print(chat_id)
+    # print(chat_id)
     signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Stop')
-    signal.is_test_mode = True
+    # signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -123,9 +123,9 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def notice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    print(chat_id)
-    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Stop')
-    signal.is_test_mode = True
+    # print(chat_id)
+    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Notice')
+    # signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
