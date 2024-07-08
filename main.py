@@ -1,12 +1,11 @@
 import logging
 import os
 import datetime
-import json
-from typing import Dict
 
 import requests
+import telemetrydeckpy
 from dotenv import load_dotenv
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -20,6 +19,7 @@ from telegram.ext import (
 load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
+APP_ID = os.getenv('APP_ID')
 
 # Enable logging
 logging.basicConfig(
@@ -32,12 +32,21 @@ logger = logging.getLogger(__name__)
 CHOOSING, WEEKEND, DAY, ABOUT = range(4)
 
 reply_keyboard = [
-    ['Next', 'Bands', 'About', 'Stop']
+    ['/next', '/bands', '/about', '/stop']
 ]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
+telemetry = telemetrydeckpy.TelemetryDeck()
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    chat_id = update.effective_message.chat_id
+    print(chat_id)
+    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Start')
+    signal.is_test_mode = True
+
+    telemetry.send_signal(signal)
+
     await update.message.reply_text(
         "Hi! Welcome to the unoffical Dong Open Air Telegram bot! You got the following commands\n/next\n/bands\n/about\n/stop\n If the bot stops responing try to enter /start again.",
         reply_markup=markup,
@@ -47,6 +56,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    chat_id = update.effective_message.chat_id
+    print(chat_id)
+    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.UpNext')
+    signal.is_test_mode = True
+
+    telemetry.send_signal(signal)
+
     r = requests.get('https://festivals.kurzgedanke.de/api/festivals/doa24/stages/mainstage/upnext')
     upnext = r.json()
     await update.message.reply_text(f"Up-Next:\n{upnext[0]['band']}\n{upnext[0]['startTime']}")
@@ -55,6 +71,13 @@ async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    chat_id = update.effective_message.chat_id
+    print(chat_id)
+    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Bands')
+    signal.is_test_mode = True
+
+    telemetry.send_signal(signal)
+
     await update.message.reply_text('Loading...')
     r = requests.get('https://festivals.kurzgedanke.de/api/festivals/doa24/stages/mainstage/timeslots')
     timeslots_main_stage = r.json()
@@ -71,8 +94,15 @@ async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    chat_id = update.effective_message.chat_id
+    print(chat_id)
+    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.About')
+    signal.is_test_mode = True
+
+    telemetry.send_signal(signal)
+
     await update.message.reply_text("Hey! Thanks for using the unoffical Dong Open Air Telegram bot!")
-    await update.message.reply_text("This bot, as well as the source is open source and can be found on github.")
+    await update.message.reply_text("This bot, as well as the data source, is open source and can be found on github.")
     await update.message.reply_text("https://github.com/KurzGedanke/unofficial-dong-open-air-telegram-bot")
     await update.message.reply_text("If you notice anything off or have any question, please contact me!\nYou will find me on most social network with the handel @ KurzGedanke.")
     await update.message.reply_text("Have fun and stay save at Dong Open Air 2024!")
@@ -80,9 +110,28 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    chat_id = update.effective_message.chat_id
+    print(chat_id)
+    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Stop')
+    signal.is_test_mode = True
+
+    telemetry.send_signal(signal)
+
     await update.message.reply_text("Stopping!")
     await update.message.reply_text("You stopped the bot. To restart it type \n/start")
     return ConversationHandler.END
+
+async def notice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    chat_id = update.effective_message.chat_id
+    print(chat_id)
+    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Stop')
+    signal.is_test_mode = True
+
+    telemetry.send_signal(signal)
+
+    await update.message.reply_text("Stopping!")
+    await update.message.reply_text("You stopped the bot. To restart it type \n/start")
+    return CHOOSING
 
 
 def main() -> None:
@@ -92,11 +141,12 @@ def main() -> None:
         entry_points=[CommandHandler("start", start)],
         states={
             CHOOSING: [
-                MessageHandler(filters.Regex("^Next$"), upnext),
-                MessageHandler(filters.Regex("^Bands$"), bands),
-                MessageHandler(filters.Regex("^Stop$"), stop),
-                MessageHandler(filters.Regex("^About"), about),
-                MessageHandler(filters.Regex("^Help"), about),
+                MessageHandler(filters.Regex("^/next$"), upnext),
+                MessageHandler(filters.Regex("^/bands$"), bands),
+                MessageHandler(filters.Regex("^/stop$"), stop),
+                MessageHandler(filters.Regex("^/about"), about),
+                MessageHandler(filters.Regex("^/help"), about),
+                MessageHandler(filters.Regex("^notice"), about),
             ]
         },
         fallbacks=[MessageHandler(filters.Regex("^Done$"), stop)],
