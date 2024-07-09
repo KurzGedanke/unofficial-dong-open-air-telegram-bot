@@ -164,9 +164,9 @@ def main() -> None:
                 MessageHandler(filters.Regex("^/next$"), upnext),
                 MessageHandler(filters.Regex("^/bands$"), bands),
                 MessageHandler(filters.Regex("^/stop$"), stop),
-                MessageHandler(filters.Regex("^/about"), about),
-                MessageHandler(filters.Regex("^/help"), about),
-                MessageHandler(filters.Regex("^notice"), notice),
+                MessageHandler(filters.Regex("^/about$"), about),
+                MessageHandler(filters.Regex("^/help$"), about),
+                MessageHandler(filters.Regex("^notice$"), notice),
             ]
         },
         fallbacks=[MessageHandler(filters.Regex("^Done$"), stop)],
