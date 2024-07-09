@@ -1,6 +1,8 @@
 import logging
 import os
 import datetime
+import sqlite3
+import hashlib
 
 import requests
 import telemetrydeckpy
@@ -20,35 +22,52 @@ load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
 APP_ID = os.getenv('APP_ID')
+SALT = os.getenv('SALT')
+HASH = os.getenv('HASH')
 
 # Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 # set higher logging level for httpx to avoid all GET and POST requests being logged
-logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger('httpx').setLevel(logging.WARNING)
+logging.basicConfig(filename='main.log', encoding='utf-8', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-CHOOSING, WEEKEND, DAY, ABOUT = range(4)
+con = sqlite3.connect('db.sqlite')
+
+CHOOSING, AUTH_REPLY, AUTH_BROADCAST = range(3)
 
 reply_keyboard = [
-    ['/next', '/bands', '/about', '/stop']
+    ['/next', '/bands', '/about']
 ]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
 telemetry = telemetrydeckpy.TelemetryDeck()
 
 
+def make_sha(chat_id):
+    return hashlib.sha256(str(chat_id).encode('utf-8')).hexdigest()
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
+
+    try:
+        cur = con.cursor()
+        cur.execute('INSERT INTO User (chat_id, consent) VALUES (?, ?)', (str(chat_id), 1))
+        con.commit()
+    except Exception as e:
+        logger.error(e)
+
     # print(chat_id)
-    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Start')
+    signal = telemetrydeckpy.Signal(APP_ID, make_sha(chat_id), 'Dong.Telegram.Start')
     # signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
     await update.message.reply_text(
-        "Hi! Welcome to the unoffical Dong Open Air Telegram bot! You got the following commands\n/next\n/bands\n/about\n/stop\n If the bot stops responing try to enter /start again.",
+        'Hi! Welcome to the unoffical Dong Open Air Telegram bot! You got the following commands\n/next\n/bands\n/about\n/stop\n If the bot stops responing try to enter /start again.',
         reply_markup=markup,
     )
 
@@ -57,9 +76,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    # print(chat_id)
-    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.UpNext')
-    # signal.is_test_mode = True
+    signal = telemetrydeckpy.Signal(APP_ID, make_sha(chat_id), 'Dong.Telegram.UpNext')
+    signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -72,9 +90,8 @@ async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    # print(chat_id)
-    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Bands')
-    # signal.is_test_mode = True
+    signal = telemetrydeckpy.Signal(APP_ID, make_sha(chat_id), 'Dong.Telegram.Bands')
+    signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -95,61 +112,106 @@ async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    # print(chat_id)
-    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.About')
-    # signal.is_test_mode = True
+    signal = telemetrydeckpy.Signal(APP_ID, make_sha(chat_id), 'Dong.Telegram.About')
+    signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
-    await update.message.reply_text("Hey! Thanks for using the unoffical Dong Open Air Telegram bot!")
-    await update.message.reply_text("This bot, as well as the data source, is open source and can be found on github.")
-    await update.message.reply_text("https://github.com/KurzGedanke/unofficial-dong-open-air-telegram-bot")
-    await update.message.reply_text("If you notice anything off or have any question, please contact me!\nYou will find me on most social network with the handel @ KurzGedanke.")
-    await update.message.reply_text("Have fun and stay save at Dong Open Air 2024!")
+    await update.message.reply_text('Hey! Thanks for using the unoffical Dong Open Air Telegram bot!')
+    await update.message.reply_text('This bot, as well as the data source, is open source and can be found on github.')
+    await update.message.reply_text('https://github.com/KurzGedanke/unofficial-dong-open-air-telegram-bot')
+    await update.message.reply_text(
+        'If you notice anything off or have any question, please contact me!\nYou will find me on most social network with the handel @ KurzGedanke.')
+    await update.message.reply_text('Have fun and stay save at Dong Open Air 2024!')
     return CHOOSING
 
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    # print(chat_id)
-    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Stop')
-    # signal.is_test_mode = True
+    signal = telemetrydeckpy.Signal(APP_ID, make_sha(chat_id), 'Dong.Telegram.Stop')
+    signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
-    await update.message.reply_text("Stopping!")
-    await update.message.reply_text("You stopped the bot. To restart it type \n/start")
+    await update.message.reply_text('Stopping!')
+    await update.message.reply_text('You stopped the bot. To restart it type \n/start')
     return ConversationHandler.END
+
+
+async def auth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text('Please input: ')
+    return AUTH_REPLY
+
+
+async def processed_auth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    password = update.message.text
+
+    hash_pw = make_sha(SALT + HASH)
+    hash_input_pw = make_sha(SALT + password)
+
+    if hash_pw == hash_input_pw:
+        await update.message.reply_text('AUTHED!')
+        await update.message.reply_text('Please input broadcast text: ')
+
+        return AUTH_BROADCAST
+    else:
+        return CHOOSING
+
 
 async def notice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    # print(chat_id)
-    signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Notice')
-    # signal.is_test_mode = True
-
+    signal = telemetrydeckpy.Signal(APP_ID, make_sha(chat_id), 'Dong.Telegram.Notice')
+    signal.is_test_mode = True
     telemetry.send_signal(signal)
+    broadcast_text = update.message.text
 
-    await update.message.reply_text("Stopping!")
-    await update.message.reply_text("You stopped the bot. To restart it type \n/start")
+    try:
+        cur = con.cursor()
+        res = cur.execute('SELECT chat_id FROM User')
+        chat_ids = res.fetchall()
+    except Exception as e:
+        logger.error(e)
+
+    for chatid in chat_ids:
+        context.job_queue.run_once(broadcast, 1, chat_id=chatid[0], name=str(chat_id), data=str(broadcast_text))
+
     return CHOOSING
+
+
+async def broadcast(context: ContextTypes.DEFAULT_TYPE):
+    job = context.job
+
+    await context.bot.send_message(job.chat_id, text=job.data)
 
 
 def main() -> None:
     application = Application.builder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
+        entry_points=[CommandHandler('start', start)],
         states={
             CHOOSING: [
-                MessageHandler(filters.Regex("^/next$"), upnext),
-                MessageHandler(filters.Regex("^/bands$"), bands),
-                MessageHandler(filters.Regex("^/stop$"), stop),
-                MessageHandler(filters.Regex("^/about"), about),
-                MessageHandler(filters.Regex("^/help"), about),
-                MessageHandler(filters.Regex("^notice"), about),
-            ]
+                MessageHandler(filters.Regex('^/next$'), upnext),
+                MessageHandler(filters.Regex('^/bands$'), bands),
+                MessageHandler(filters.Regex('^/stop$'), stop),
+                MessageHandler(filters.Regex('^/about$'), about),
+                MessageHandler(filters.Regex('^/help$'), about),
+                MessageHandler(filters.Regex('^auth'), auth),
+            ],
+            AUTH_REPLY: [
+                MessageHandler(
+                    filters.TEXT & ~(filters.COMMAND | filters.Regex('^Done$')),
+                    processed_auth,
+                )
+            ],
+            AUTH_BROADCAST: [
+                MessageHandler(
+                    filters.TEXT & ~(filters.COMMAND | filters.Regex('^Done$')),
+                    notice,
+                )
+            ],
         },
-        fallbacks=[MessageHandler(filters.Regex("^Done$"), stop)],
+        fallbacks=[MessageHandler(filters.Regex('^Done$'), stop)],
     )
 
     application.add_handler(conv_handler)
