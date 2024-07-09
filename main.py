@@ -38,7 +38,7 @@ con = sqlite3.connect("db.sqlite")
 CHOOSING, WEEKEND, DAY, ABOUT = range(4)
 
 reply_keyboard = [
-    ['/next', '/bands', '/about', '/stop']
+    ['/next', '/bands', '/about']
 ]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
