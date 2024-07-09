@@ -1,6 +1,7 @@
 import logging
 import os
 import datetime
+import sqlite3
 
 import requests
 import telemetrydeckpy
@@ -20,6 +21,8 @@ load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
 APP_ID = os.getenv('APP_ID')
+SALT = os.getenv('SALT')
+HASH = os.getenv('HASH')
 
 # Enable logging
 logging.basicConfig(
@@ -27,7 +30,10 @@ logging.basicConfig(
 )
 # set higher logging level for httpx to avoid all GET and POST requests being logged
 logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.basicConfig(filename='main.log', encoding='utf-8', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+con = sqlite3.connect("db.sqlite")
 
 CHOOSING, WEEKEND, DAY, ABOUT = range(4)
 
@@ -41,6 +47,14 @@ telemetry = telemetrydeckpy.TelemetryDeck()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
+
+    try:
+        cur = con.cursor()
+        cur.execute('INSERT INTO User (chat_id, consent) VALUES (?, ?)', (str(chat_id), 1))
+        con.commit()
+    except Exception as e:
+        logger.error(e)
+
     # print(chat_id)
     signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Start')
     # signal.is_test_mode = True
@@ -57,9 +71,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    # print(chat_id)
     signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.UpNext')
-    # signal.is_test_mode = True
+    signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -72,9 +85,8 @@ async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    # print(chat_id)
     signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Bands')
-    # signal.is_test_mode = True
+    signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -95,9 +107,8 @@ async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    # print(chat_id)
     signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.About')
-    # signal.is_test_mode = True
+    signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -111,9 +122,8 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    # print(chat_id)
     signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Stop')
-    # signal.is_test_mode = True
+    signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -123,16 +133,26 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def notice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
-    # print(chat_id)
     signal = telemetrydeckpy.Signal(APP_ID, str(chat_id), 'Dong.Telegram.Notice')
-    # signal.is_test_mode = True
-
+    signal.is_test_mode = True
     telemetry.send_signal(signal)
 
-    await update.message.reply_text("Stopping!")
-    await update.message.reply_text("You stopped the bot. To restart it type \n/start")
+    try:
+        cur = con.cursor()
+        res = cur.execute('SELECT chat_id FROM User')
+        chat_ids = res.fetchall()
+    except Exception as e:
+        logger.error(e)
+
+    for chatid in chat_ids:
+        context.job_queue.run_once(broadcast, 1, chat_id=chatid[0], name=str(chat_id), data='Hello Broadcast!')
+
     return CHOOSING
 
+async def broadcast(context: ContextTypes.DEFAULT_TYPE) -> int:
+    job = context.job
+
+    await context.bot.send_message(job.chat_id, text=job.data)
 
 def main() -> None:
     application = Application.builder().token(TOKEN).build()
@@ -146,7 +166,7 @@ def main() -> None:
                 MessageHandler(filters.Regex("^/stop$"), stop),
                 MessageHandler(filters.Regex("^/about"), about),
                 MessageHandler(filters.Regex("^/help"), about),
-                MessageHandler(filters.Regex("^notice"), about),
+                MessageHandler(filters.Regex("^notice"), notice),
             ]
         },
         fallbacks=[MessageHandler(filters.Regex("^Done$"), stop)],
