@@ -20,6 +20,7 @@ $ source venv/bin/activate
 
 # install packages
 $ pip install -r requirements.txt
+$ pip install "python-telegram-bot[job-queue]"
 
 # run
 $ python main.py

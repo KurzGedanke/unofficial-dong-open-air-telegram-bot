@@ -133,6 +133,13 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     telemetry.send_signal(signal)
 
+    try:
+        cur = con.cursor()
+        cur.execute('DELETE FROM User WHERE chat_id = (?)', (str(chat_id)))
+        con.commit()
+    except Exception as e:
+        logger.error(e)
+
     await update.message.reply_text('Stopping!')
     await update.message.reply_text('You stopped the bot. To restart it type \n/start')
     return ConversationHandler.END
@@ -161,7 +168,7 @@ async def processed_auth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def notice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
     signal = telemetrydeckpy.Signal(APP_ID, make_sha(chat_id), 'Dong.Telegram.Notice')
-    signal.is_test_mode = True
+    # signal.is_test_mode = True
     telemetry.send_signal(signal)
     broadcast_text = update.message.text
 
