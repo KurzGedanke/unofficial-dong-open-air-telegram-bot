@@ -77,7 +77,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
     signal = telemetrydeckpy.Signal(APP_ID, make_sha(chat_id), 'Dong.Telegram.UpNext')
-    signal.is_test_mode = True
+    # signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -91,7 +91,7 @@ async def upnext(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
     signal = telemetrydeckpy.Signal(APP_ID, make_sha(chat_id), 'Dong.Telegram.Bands')
-    signal.is_test_mode = True
+    # signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -113,7 +113,7 @@ async def bands(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
     signal = telemetrydeckpy.Signal(APP_ID, make_sha(chat_id), 'Dong.Telegram.About')
-    signal.is_test_mode = True
+    # signal.is_test_mode = True
 
     telemetry.send_signal(signal)
 
@@ -168,7 +168,7 @@ async def processed_auth(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def notice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.effective_message.chat_id
     signal = telemetrydeckpy.Signal(APP_ID, make_sha(chat_id), 'Dong.Telegram.Notice')
-    signal.is_test_mode = True
+    # signal.is_test_mode = True
     telemetry.send_signal(signal)
     broadcast_text = update.message.text
 
